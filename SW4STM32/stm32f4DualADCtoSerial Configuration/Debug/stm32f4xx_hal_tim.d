@@ -1,5 +1,5 @@
-Application/User/stm32f4xx_hal_spi.o: \
- C:/Users/scott/STM32Cube/Repository/STM32Cube_FW_F4_V1.10.0/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c \
+stm32f4xx_hal_tim.o: \
+ C:/Users/scott/STM32Cube/Repository/STM32Cube_FW_F4_V1.10.0/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/stm32f4xx_hal_conf.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/mxconstants.h \
