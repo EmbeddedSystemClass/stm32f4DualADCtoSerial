@@ -46,7 +46,7 @@ ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac;
-DMA_HandleTypeDef hdma_dac2;
+DMA_HandleTypeDef hdma_dac1;
 
 I2C_HandleTypeDef hi2c1;
 
@@ -54,9 +54,8 @@ SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim6;
 
-UART_HandleTypeDef huart1;
-DMA_HandleTypeDef hdma_usart1_rx;
-DMA_HandleTypeDef hdma_usart1_tx;
+UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -103,13 +102,13 @@ static void MX_DAC_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM6_Init(void);
-static void MX_USART1_UART_Init(void);
+static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-static void DAC_Ch2_SinConfig(void);
+static void DAC_Ch1_SinConfig(void);
 void processAdcPacket(uint32_t startIndex, uint32_t endIndex);
 
 static void Error_Handler(void);
@@ -127,7 +126,7 @@ void broadcastVoltage() {
 	int lastTimeIndex = voltageStruct.bufferLength - (SINGLE_PACKET_LENGTH - 1);
 	if (voltageStruct.bufferFirstHalf[lastTimeIndex] > lastTime) {
 
-		if (HAL_UART_Transmit_DMA(&huart1,
+		if (HAL_UART_Transmit_DMA(&huart2,
 				(uint8_t*) voltageStruct.bufferFirstHalf,
 				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
 				!= HAL_OK) {
@@ -144,7 +143,7 @@ void broadcastVoltage() {
 	}
 	if (voltageStruct.bufferLastHalf[lastTimeIndex] > lastTime) {
 
-		if (HAL_UART_Transmit_DMA(&huart1,
+		if (HAL_UART_Transmit_DMA(&huart2,
 				(uint8_t*) voltageStruct.bufferLastHalf,
 				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
 				!= HAL_OK) {
@@ -191,7 +190,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM6_Init();
-  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
 	/* Configure LED3, LED4, LED5 and LED6 */
@@ -221,7 +220,7 @@ int main(void)
 		Error_Handler();
 	}
 
-	DAC_Ch2_SinConfig();
+	DAC_Ch1_SinConfig();
 
 	/* Configure USER Button */
 	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
@@ -245,7 +244,7 @@ int main(void)
 	/*##-2- Start the transmission process #####################################*/
 	/* While the UART in reception process, user can transmit data through
 	 "aTxBuffer" buffer */
-	if (HAL_UART_Transmit_DMA(&huart1, (uint8_t*) aTxBuffer, TXBUFFERSIZE)
+	if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*) aTxBuffer, TXBUFFERSIZE)
 			!= HAL_OK) {
 		Error_Handler();
 	}
@@ -342,7 +341,7 @@ void MX_ADC1_Init(void)
 
     /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
     */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
@@ -379,7 +378,7 @@ void MX_ADC2_Init(void)
 
     /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
     */
-  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
@@ -397,11 +396,11 @@ void MX_DAC_Init(void)
   hdac.Instance = DAC;
   HAL_DAC_Init(&hdac);
 
-    /**DAC channel OUT2 config 
+    /**DAC channel OUT1 config 
     */
   sConfig.DAC_Trigger = DAC_TRIGGER_T6_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-  HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2);
+  HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1);
 
 }
 
@@ -460,19 +459,19 @@ void MX_TIM6_Init(void)
 
 }
 
-/* USART1 init function */
-void MX_USART1_UART_Init(void)
+/* USART2 init function */
+void MX_USART2_UART_Init(void)
 {
 
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  HAL_UART_Init(&huart1);
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  HAL_UART_Init(&huart2);
 
 }
 
@@ -486,14 +485,12 @@ void MX_DMA_Init(void)
   __DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
 
 }
 
@@ -512,8 +509,8 @@ void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __GPIOH_CLK_ENABLE();
   __GPIOA_CLK_ENABLE();
-  __GPIOD_CLK_ENABLE();
   __GPIOB_CLK_ENABLE();
+  __GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -646,7 +643,7 @@ void processAdcPacket(uint32_t startIndex, uint32_t endIndex) {
  *         the configuration information for the specified DAC.
  * @retval None
  */
-void HAL_DAC_ErrorCallbackCh2(DAC_HandleTypeDef *hdac) {
+void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac) {
 	Error_Handler();
 }
 
@@ -656,12 +653,12 @@ void HAL_DAC_ErrorCallbackCh2(DAC_HandleTypeDef *hdac) {
  *         the configuration information for the specified DAC.
  * @retval None
  */
-void HAL_DAC_DMAUnderrunCallbackCh2(DAC_HandleTypeDef *hdac) {
+void HAL_DAC_DMAUnderrunCallbackCh1(DAC_HandleTypeDef *hdac) {
 	Error_Handler();
 }
 
 #define PERIOD 2520
-static void DAC_Ch2_SinConfig(void) {
+static void DAC_Ch1_SinConfig(void) {
 	float32_t phase, sin, cos;
 
 	uint16_t waveformValue;
@@ -677,7 +674,7 @@ static void DAC_Ch2_SinConfig(void) {
 	}
 
 	/*##-2- Enable DAC selected channel and associated DMA #############################*/
-	if (HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_2, (uint32_t *) sinBuffer,
+	if (HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *) sinBuffer,
 			(size_t) sinBufferSize, DAC_ALIGN_12B_R) != HAL_OK) {
 		/* Start DMA Error */
 		Error_Handler();
