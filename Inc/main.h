@@ -27,6 +27,12 @@ typedef struct {
 #define PACKETS_PER_FRAME 10
 #define ETHERNET_BUFFER_LENGTH SINGLE_PACKET_LENGTH * PACKETS_PER_FRAME
 /* Exported macro ------------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
+
+/* Size of buffer */
+#define BUFFERSIZE                       (COUNTOF(aTxBuffer) - 1)
+
 /* Exported functions ------------------------------------------------------- */
 
 //void http_server_socket_init(void);

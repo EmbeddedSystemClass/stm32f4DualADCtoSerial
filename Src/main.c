@@ -1,35 +1,35 @@
 /**
-  ******************************************************************************
-  * File Name          : main.c
-  * Description        : Main program body
-  ******************************************************************************
-  *
-  * COPYRIGHT(c) 2016 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * File Name          : main.c
+ * Description        : Main program body
+ ******************************************************************************
+ *
+ * COPYRIGHT(c) 2016 STMicroelectronics
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright notice,
+ *      this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ *   3. Neither the name of STMicroelectronics nor the names of its contributors
+ *      may be used to endorse or promote products derived from this software
+ *      without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ ******************************************************************************
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
@@ -41,6 +41,7 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+//#define MASTER_BOARD
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
@@ -50,17 +51,21 @@ DMA_HandleTypeDef hdma_dac2;
 
 I2C_HandleTypeDef hi2c1;
 
-SPI_HandleTypeDef hspi1;
+SPI_HandleTypeDef hspi2;
+DMA_HandleTypeDef hdma_spi2_rx;
+DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim6;
-
-UART_HandleTypeDef huart1;
-DMA_HandleTypeDef hdma_usart1_rx;
-DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 VoltageStruct voltageStruct;
+
+/* Buffer used for transmission */
+uint8_t aTxBuffer[] = "message*";
+
+/* Buffer used for reception */
+uint8_t aRxBuffer[BUFFERSIZE];
 
 /* Variable used to get converted value */
 __IO uint32_t aADCDualConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
@@ -74,22 +79,7 @@ uint32_t bufferLast[ETHERNET_BUFFER_LENGTH] = { 0 };
 #define sinBufferSize 1024
 __IO uint16_t sinBuffer[sinBufferSize] = { 0 };
 
-/* Size of Transmission buffer */
-#define TXBUFFERSIZE                     (COUNTOF(aTxBuffer) - 1)
-/* Size of Reception buffer */
-#define RXBUFFERSIZE                     TXBUFFERSIZE
-
-/* Exported macro ------------------------------------------------------------*/
-#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
-
 __IO ITStatus UartReady = RESET;
-
-/* Buffer used for transmission */
-uint8_t aTxBuffer[] =
-		" ****UART_TwoBoards communication based on DMA****  ****UART_TwoBoards communication based on DMA****  ****UART_TwoBoards communication based on DMA**** ";
-
-/* Buffer used for reception */
-uint8_t aRxBuffer[RXBUFFERSIZE];
 
 /* USER CODE END PV */
 
@@ -101,9 +91,8 @@ static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_DAC_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_SPI1_Init(void);
+static void MX_SPI2_Init(void);
 static void MX_TIM6_Init(void);
-static void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -127,78 +116,148 @@ void broadcastVoltage() {
 	int lastTimeIndex = voltageStruct.bufferLength - (SINGLE_PACKET_LENGTH - 1);
 	if (voltageStruct.bufferFirstHalf[lastTimeIndex] > lastTime) {
 
-		if (HAL_UART_Transmit_DMA(&huart1,
-				(uint8_t*) voltageStruct.bufferFirstHalf,
-				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
-				!= HAL_OK) {
+		/*##-2- Start the Full Duplex Communication process ########################*/
+		/* While the SPI in TransmitReceive process, user can transmit data through
+		 "aTxBuffer" buffer & receive data through "aRxBuffer" */
+		if (HAL_SPI_TransmitReceive_DMA(&hspi2, (uint8_t*) aTxBuffer,
+				(uint8_t *) aRxBuffer, BUFFERSIZE) != HAL_OK) {
+			/* Transfer error in transmission process */
 			Error_Handler();
 		}
-		lastTime = voltageStruct.bufferFirstHalf[lastTimeIndex];
 
 		/*##-3- Wait for the end of the transfer ###################################*/
-		while (UartReady != SET) {
+		/*  Before starting a new communication transfer, you need to check the current
+		 state of the peripheral; if it’s busy you need to wait for the end of current
+		 transfer before starting a new one.
+		 For simplicity reasons, this example is just waiting till the end of the
+		 transfer, but application may perform other tasks while transfer operation
+		 is ongoing. */
+		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
 		}
 
-		/* Reset transmission flag */
-		UartReady = RESET;
+//		if (HAL_UART_Transmit_DMA(&huart3,
+//				(uint8_t*) voltageStruct.bufferFirstHalf,
+//				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
+//				!= HAL_OK) {
+//			Error_Handler();
+//		}
+
+		lastTime = voltageStruct.bufferFirstHalf[lastTimeIndex];
+
 	}
 	if (voltageStruct.bufferLastHalf[lastTimeIndex] > lastTime) {
 
-		if (HAL_UART_Transmit_DMA(&huart1,
-				(uint8_t*) voltageStruct.bufferLastHalf,
-				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
-				!= HAL_OK) {
+		if (HAL_SPI_TransmitReceive_DMA(&hspi2, (uint8_t*) aTxBuffer,
+				(uint8_t *) aRxBuffer, BUFFERSIZE) != HAL_OK) {
+			/* Transfer error in transmission process */
 			Error_Handler();
 		}
-		lastTime = voltageStruct.bufferLastHalf[lastTimeIndex];
 
 		/*##-3- Wait for the end of the transfer ###################################*/
-		while (UartReady != SET) {
+		/*  Before starting a new communication transfer, you need to check the current
+		 state of the peripheral; if it’s busy you need to wait for the end of current
+		 transfer before starting a new one.
+		 For simplicity reasons, this example is just waiting till the end of the
+		 transfer, but application may perform other tasks while transfer operation
+		 is ongoing. */
+		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
 		}
 
-		/* Reset transmission flag */
-		UartReady = RESET;
+//		if (HAL_UART_Transmit_DMA(&huart3,
+//				(uint8_t*) voltageStruct.bufferLastHalf,
+//				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
+//				!= HAL_OK) {
+//			Error_Handler();
+//		}
+//
+		lastTime = voltageStruct.bufferLastHalf[lastTimeIndex];
+
 	}
 
 }
 
 /* USER CODE END 0 */
 
-int main(void)
-{
+int main(void) {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 	voltageStruct.packetHeader = 0x0000AA55;
 	voltageStruct.bufferFirstHalf = bufferFirst;
 	voltageStruct.bufferLastHalf = bufferLast;
 	voltageStruct.bufferLength = ETHERNET_BUFFER_LENGTH;
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------------------*/
+	/* MCU Configuration----------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
-  MX_ADC2_Init();
-  MX_DAC_Init();
-  MX_I2C1_Init();
-  MX_SPI1_Init();
-  MX_TIM6_Init();
-  MX_USART1_UART_Init();
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_DMA_Init();
+	MX_ADC1_Init();
+	MX_ADC2_Init();
+	MX_DAC_Init();
+	MX_I2C1_Init();
+	MX_SPI2_Init();
+	MX_TIM6_Init();
 
-  /* USER CODE BEGIN 2 */
+	/* USER CODE BEGIN 2 */
 	/* Configure LED3, LED4, LED5 and LED6 */
 	BSP_LED_Init(LED3);
 	BSP_LED_Init(LED4);
 	BSP_LED_Init(LED5);
 	BSP_LED_Init(LED6);
+#ifdef MASTER_BOARD
+	SpiHandle.Init.Mode = SPI_MODE_MASTER;
+#else
+	hspi2.Init.Mode = SPI_MODE_SLAVE;
+#endif /* MASTER_BOARD */
+
+	if (HAL_SPI_Init(&hspi2) != HAL_OK) {
+		/* Initialization Error */
+		Error_Handler();
+	}
+
+#ifdef MASTER_BOARD
+	/* Configure USER Button */
+	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
+
+	/* Wait for USER Button press before starting the Communication */
+	while (BSP_PB_GetState(BUTTON_KEY) != 1)
+	{
+		BSP_LED_Toggle(LED3);
+		HAL_Delay(40);
+	}
+
+	BSP_LED_Off(LED3);
+#endif /* MASTER_BOARD */
+
+	while (1) {
+
+		/*##-2- Start the Full Duplex Communication process ########################*/
+		/* While the SPI in TransmitReceive process, user can transmit data through
+		 "aTxBuffer" buffer & receive data through "aRxBuffer" */
+		if (HAL_SPI_TransmitReceive_DMA(&hspi2, (uint8_t*) aTxBuffer,
+				(uint8_t *) aRxBuffer, BUFFERSIZE) != HAL_OK) {
+			/* Transfer error in transmission process */
+			Error_Handler();
+		}
+
+		/*##-3- Wait for the end of the transfer ###################################*/
+		/*  Before starting a new communication transfer, you need to check the current
+		 state of the peripheral; if it’s busy you need to wait for the end of current
+		 transfer before starting a new one.
+		 For simplicity reasons, this example is just waiting till the end of the
+		 transfer, but application may perform other tasks while transfer operation
+		 is ongoing. */
+		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
+		}
+
+	}
 
 	/*##-2- Enable TIM peripheral counter ######################################*/
 	HAL_TIM_Base_Start(&htim6);
@@ -223,355 +282,260 @@ int main(void)
 
 	DAC_Ch2_SinConfig();
 
-	/* Configure USER Button */
-	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
+	/* USER CODE END 2 */
 
-	/* Wait for USER Button press before starting the Communication */
-	while (BSP_PB_GetState(BUTTON_KEY) == RESET) {
-		/* Toggle LED3 waiting for user to press button */
-		BSP_LED_Toggle(LED3);
-		HAL_Delay(40);
-	}
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	while (1) {
+		/* USER CODE END WHILE */
 
-	/* Wait for USER Button release before starting the Communication */
-	while (BSP_PB_GetState(BUTTON_KEY) == SET) {
-	}
-
-	/* Turn LED3 off */
-	BSP_LED_Off(LED3);
-
-	/* The board sends the message and expects to receive it back */
-
-	/*##-2- Start the transmission process #####################################*/
-	/* While the UART in reception process, user can transmit data through
-	 "aTxBuffer" buffer */
-	if (HAL_UART_Transmit_DMA(&huart1, (uint8_t*) aTxBuffer, TXBUFFERSIZE)
-			!= HAL_OK) {
-		Error_Handler();
-	}
-
-	/*##-3- Wait for the end of the transfer ###################################*/
-	while (UartReady != SET) {
-	}
-
-	/* Reset transmission flag */
-	UartReady = RESET;
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
-	  broadcastVoltage();
+		/* USER CODE BEGIN 3 */
+		broadcastVoltage();
 
 	}
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 
 }
 
 /** System Clock Configuration
-*/
-void SystemClock_Config(void)
-{
+ */
+void SystemClock_Config(void) {
 
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	RCC_OscInitTypeDef RCC_OscInitStruct;
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-  __PWR_CLK_ENABLE();
+	__PWR_CLK_ENABLE()
+	;
 
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 25;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
-  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLM = 25;
+	RCC_OscInitStruct.PLL.PLLN = 336;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 4;
+	HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1
-                              |RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1
+			| RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
 
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+	/* SysTick_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
 /* ADC1 init function */
-void MX_ADC1_Init(void)
-{
+void MX_ADC1_Init(void) {
 
-  ADC_MultiModeTypeDef multimode;
-  ADC_ChannelConfTypeDef sConfig;
+	ADC_MultiModeTypeDef multimode;
+	ADC_ChannelConfTypeDef sConfig;
 
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
-    */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc1.Init.Resolution = ADC_RESOLUTION12b;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = ENABLE;
-  hadc1.Init.EOCSelection = EOC_SINGLE_CONV;
-  HAL_ADC_Init(&hadc1);
+	/**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+	 */
+	hadc1.Instance = ADC1;
+	hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
+	hadc1.Init.Resolution = ADC_RESOLUTION12b;
+	hadc1.Init.ScanConvMode = DISABLE;
+	hadc1.Init.ContinuousConvMode = ENABLE;
+	hadc1.Init.DiscontinuousConvMode = DISABLE;
+	hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+	hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	hadc1.Init.NbrOfConversion = 1;
+	hadc1.Init.DMAContinuousRequests = ENABLE;
+	hadc1.Init.EOCSelection = EOC_SINGLE_CONV;
+	HAL_ADC_Init(&hadc1);
 
-    /**Configure the ADC multi-mode 
-    */
-  multimode.Mode = ADC_DUALMODE_REGSIMULT;
-  multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
-  HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode);
+	/**Configure the ADC multi-mode
+	 */
+	multimode.Mode = ADC_DUALMODE_REGSIMULT;
+	multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
+	multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
+	HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode);
 
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
-    */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+	/**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	 */
+	sConfig.Channel = ADC_CHANNEL_1;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
 }
 
 /* ADC2 init function */
-void MX_ADC2_Init(void)
-{
+void MX_ADC2_Init(void) {
 
-  ADC_MultiModeTypeDef multimode;
-  ADC_ChannelConfTypeDef sConfig;
+	ADC_MultiModeTypeDef multimode;
+	ADC_ChannelConfTypeDef sConfig;
 
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
-    */
-  hadc2.Instance = ADC2;
-  hadc2.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc2.Init.Resolution = ADC_RESOLUTION12b;
-  hadc2.Init.ScanConvMode = DISABLE;
-  hadc2.Init.ContinuousConvMode = ENABLE;
-  hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc2.Init.NbrOfConversion = 1;
-  hadc2.Init.DMAContinuousRequests = ENABLE;
-  hadc2.Init.EOCSelection = EOC_SINGLE_CONV;
-  HAL_ADC_Init(&hadc2);
+	/**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+	 */
+	hadc2.Instance = ADC2;
+	hadc2.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
+	hadc2.Init.Resolution = ADC_RESOLUTION12b;
+	hadc2.Init.ScanConvMode = DISABLE;
+	hadc2.Init.ContinuousConvMode = ENABLE;
+	hadc2.Init.DiscontinuousConvMode = DISABLE;
+	hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	hadc2.Init.NbrOfConversion = 1;
+	hadc2.Init.DMAContinuousRequests = ENABLE;
+	hadc2.Init.EOCSelection = EOC_SINGLE_CONV;
+	HAL_ADC_Init(&hadc2);
 
-    /**Configure the ADC multi-mode 
-    */
-  multimode.Mode = ADC_DUALMODE_REGSIMULT;
-  multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
-  HAL_ADCEx_MultiModeConfigChannel(&hadc2, &multimode);
+	/**Configure the ADC multi-mode
+	 */
+	multimode.Mode = ADC_DUALMODE_REGSIMULT;
+	multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
+	multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
+	HAL_ADCEx_MultiModeConfigChannel(&hadc2, &multimode);
 
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
-    */
-  sConfig.Channel = ADC_CHANNEL_2;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+	/**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	 */
+	sConfig.Channel = ADC_CHANNEL_2;
+	sConfig.Rank = 1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	HAL_ADC_ConfigChannel(&hadc2, &sConfig);
 
 }
 
 /* DAC init function */
-void MX_DAC_Init(void)
-{
+void MX_DAC_Init(void) {
 
-  DAC_ChannelConfTypeDef sConfig;
+	DAC_ChannelConfTypeDef sConfig;
 
-    /**DAC Initialization 
-    */
-  hdac.Instance = DAC;
-  HAL_DAC_Init(&hdac);
+	/**DAC Initialization
+	 */
+	hdac.Instance = DAC;
+	HAL_DAC_Init(&hdac);
 
-    /**DAC channel OUT2 config 
-    */
-  sConfig.DAC_Trigger = DAC_TRIGGER_T6_TRGO;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-  HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2);
+	/**DAC channel OUT2 config
+	 */
+	sConfig.DAC_Trigger = DAC_TRIGGER_T6_TRGO;
+	sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+	HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2);
 
 }
 
 /* I2C1 init function */
-void MX_I2C1_Init(void)
-{
+void MX_I2C1_Init(void) {
 
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED;
-  HAL_I2C_Init(&hi2c1);
+	hi2c1.Instance = I2C1;
+	hi2c1.Init.ClockSpeed = 100000;
+	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hi2c1.Init.OwnAddress1 = 0;
+	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED;
+	hi2c1.Init.OwnAddress2 = 0;
+	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED;
+	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED;
+	HAL_I2C_Init(&hi2c1);
 
 }
 
-/* SPI1 init function */
-void MX_SPI1_Init(void)
-{
+/* SPI2 init function */
+void MX_SPI2_Init(void) {
 
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLED;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
-  hspi1.Init.CRCPolynomial = 10;
-  HAL_SPI_Init(&hspi1);
+	hspi2.Instance = SPI2;
+	hspi2.Init.Mode = SPI_MODE_SLAVE;
+	hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+	hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+	hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+	hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+	hspi2.Init.NSS = SPI_NSS_HARD_INPUT;
+	hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	hspi2.Init.TIMode = SPI_TIMODE_DISABLED;
+	hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+	hspi2.Init.CRCPolynomial = 10;
+	HAL_SPI_Init(&hspi2);
 
 }
 
 /* TIM6 init function */
-void MX_TIM6_Init(void)
-{
+void MX_TIM6_Init(void) {
 
-  TIM_MasterConfigTypeDef sMasterConfig;
+	TIM_MasterConfigTypeDef sMasterConfig;
 
-  htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 0;
-  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 0xFFF;
-  HAL_TIM_Base_Init(&htim6);
+	htim6.Instance = TIM6;
+	htim6.Init.Prescaler = 0;
+	htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim6.Init.Period = 0xFFF;
+	HAL_TIM_Base_Init(&htim6);
 
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
-
-}
-
-/* USART1 init function */
-void MX_USART1_UART_Init(void)
-{
-
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  HAL_UART_Init(&huart1);
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
 
 }
 
 /** 
-  * Enable DMA controller clock
-  */
-void MX_DMA_Init(void) 
-{
-  /* DMA controller clock enable */
-  __DMA1_CLK_ENABLE();
-  __DMA2_CLK_ENABLE();
+ * Enable DMA controller clock
+ */
+void MX_DMA_Init(void) {
+	/* DMA controller clock enable */
+	__DMA1_CLK_ENABLE()
+	;
+	__DMA2_CLK_ENABLE()
+	;
 
-  /* DMA interrupt init */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+	/* DMA interrupt init */
+	HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+	HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+	HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+	HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
 /** Configure pins as 
-        * Analog 
-        * Input 
-        * Output
-        * EVENT_OUT
-        * EXTI
-*/
-void MX_GPIO_Init(void)
-{
+ * Analog
+ * Input
+ * Output
+ * EVENT_OUT
+ * EXTI
+ */
+void MX_GPIO_Init(void) {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
 
-  /* GPIO Ports Clock Enable */
-  __GPIOH_CLK_ENABLE();
-  __GPIOA_CLK_ENABLE();
-  __GPIOD_CLK_ENABLE();
-  __GPIOB_CLK_ENABLE();
+	/* GPIO Ports Clock Enable */
+	__GPIOH_CLK_ENABLE()
+	;
+	__GPIOA_CLK_ENABLE()
+	;
+	__GPIOB_CLK_ENABLE()
+	;
+	__GPIOD_CLK_ENABLE()
+	;
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	/*Configure GPIO pin : PA0 */
+	GPIO_InitStruct.Pin = GPIO_PIN_0;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+	/*Configure GPIO pins : PD12 PD13 PD14 PD15 */
+	GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
-
-/* @brief  Tx Transfer completed callback
- * @param  UartHandle: UART handle.
- * @note   This example shows a simple way to report end of DMA Tx transfer, and
- *         you can add your own implementation.
- * @retval None
- */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle) {
-	/* Set transmission flag: transfer complete */
-	UartReady = SET;
-
-	/* Turn LED6 on: Transfer in transmission process is correct */
-	BSP_LED_On(LED6);
-}
-
-/**
- * @brief  Rx Transfer completed callback
- * @param  UartHandle: UART handle
- * @note   This example shows a simple way to report end of DMA Rx transfer, and
- *         you can add your own implementation.
- * @retval None
- */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
-	/* Set transmission flag: transfer complete */
-	UartReady = SET;
-
-	/* Turn LED4 on: Transfer in reception process is correct */
-	BSP_LED_On(LED4);
-}
-
-/**
- * @brief  UART error callbacks
- * @param  UartHandle: UART handle
- * @note   This example shows a simple way to report transfer error, and you can
- *         add your own implementation.
- * @retval None
- */
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *UartHandle) {
-	/* Turn LED3 on: Transfer error in reception/transmission process */
-	BSP_LED_On(LED3);
-}
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -662,6 +626,7 @@ void HAL_DAC_DMAUnderrunCallbackCh2(DAC_HandleTypeDef *hdac) {
 
 #define PERIOD 2520
 static void DAC_Ch2_SinConfig(void) {
+
 	float32_t phase, sin, cos;
 
 	uint16_t waveformValue;
@@ -684,34 +649,59 @@ static void DAC_Ch2_SinConfig(void) {
 	}
 }
 
+/* @brief TxRx Transfer completed callback.
+ * @param hspi: SPI handle.
+ * @note This example shows a simple way to report end of DMA TxRx transfer, and
+ * you can add your own implementation.
+ * @retval None
+ */
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+	/* Turn LED4 on: Transfer in transmission process is correct */
+	BSP_LED_On(LED4);
+	/* Turn LED6 on: Transfer in reception process is correct */
+	BSP_LED_On(LED6);
+}
+
+/**
+ * @brief  SPI error callbacks.
+ * @param  hspi: SPI handle
+ * @note   This example shows a simple way to report transfer error, and you can
+ *         add your own implementation.
+ * @retval None
+ */
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
+	/* Turn LED5 on: Transfer error in reception/transmission process */
+	BSP_LED_On(LED5);
+}
+
 /* USER CODE END 4 */
 
 #ifdef USE_FULL_ASSERT
 
 /**
-   * @brief Reports the name of the source file and the source line number
-   * where the assert_param error has occurred.
-   * @param file: pointer to the source file name
-   * @param line: assert_param error line source number
-   * @retval None
-   */
+ * @brief Reports the name of the source file and the source line number
+ * where the assert_param error has occurred.
+ * @param file: pointer to the source file name
+ * @param line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
+	/* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
 	 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE END 6 */
 
 }
 
 #endif
 
 /**
-  * @}
-  */ 
+ * @}
+ */
 
 /**
-  * @}
-*/ 
+ * @}
+ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
