@@ -47,19 +47,19 @@ DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-//VoltageStruct voltageStruct;
-//
-///* Variable used to get converted value */
-//__IO uint32_t aADCDualConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
-//__IO uint16_t uhADCxConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
-//__IO uint16_t uhDACxConvertedValue = 0;
-//uint32_t sampleCounter = 0;
-//uint32_t sampleMultiplier = 0;
-//uint32_t bufferFirst[ETHERNET_BUFFER_LENGTH] = { 0 };
-//uint32_t bufferLast[ETHERNET_BUFFER_LENGTH] = { 0 };
-//
-//#define sinBufferSize 1024
-//__IO uint16_t sinBuffer[sinBufferSize] = { 0 };
+VoltageStruct voltageStruct;
+
+/* Variable used to get converted value */
+__IO uint32_t aADCDualConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
+__IO uint16_t uhADCxConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
+__IO uint16_t uhDACxConvertedValue = 0;
+uint32_t sampleCounter = 0;
+uint32_t sampleMultiplier = 0;
+uint32_t bufferFirst[ETHERNET_BUFFER_LENGTH] = { 0 };
+uint32_t bufferLast[ETHERNET_BUFFER_LENGTH] = { 0 };
+
+#define sinBufferSize 1024
+__IO uint16_t sinBuffer[sinBufferSize] = { 0 };
 
 /* Size of Transmission buffer */
 #define TXBUFFERSIZE                     (COUNTOF(aTxBuffer) - 1)

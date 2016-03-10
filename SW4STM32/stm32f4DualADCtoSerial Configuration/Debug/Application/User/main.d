@@ -1,6 +1,5 @@
 Application/User/main.o: \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Src/main.c \
- C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/main.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/stm32f4xx_hal_conf.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -29,9 +28,12 @@ Application/User/main.o: \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- C:/Users/scott/STM32Cube/Repository/STM32Cube_FW_F4_V1.10.0/Drivers/BSP/STM32F4-Discovery/stm32f4_discovery.h
-
-C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/main.h:
+ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/main.h \
+ C:/Users/scott/STM32Cube/Repository/STM32Cube_FW_F4_V1.10.0/Drivers/BSP/STM32F4-Discovery/stm32f4_discovery.h \
+ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/arm_math.h \
+ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/core_cm4.h \
+ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/arm_common_tables.h \
+ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/arm_math.h
 
 C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 
@@ -89,4 +91,14 @@ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_D
 
 C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 
+C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Inc/main.h:
+
 C:/Users/scott/STM32Cube/Repository/STM32Cube_FW_F4_V1.10.0/Drivers/BSP/STM32F4-Discovery/stm32f4_discovery.h:
+
+C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/arm_math.h:
+
+C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/core_cm4.h:
+
+C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/arm_common_tables.h:
+
+C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/CMSIS/Include/arm_math.h:

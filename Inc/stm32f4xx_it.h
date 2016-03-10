@@ -1,14 +1,10 @@
 /**
   ******************************************************************************
-  * @file    UART/UART_TwoBoards_ComDMA/Inc/stm32f4xx_it.h 
-  * @author  MCD Application Team
-  * @version   V1.2.4
-  * @date      13-November-2015
+  * @file    stm32f4xx_it.h
   * @brief   This file contains the headers of the interrupt handlers.
   ******************************************************************************
-  * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * COPYRIGHT(c) 2016 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -44,25 +40,15 @@
 #endif 
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
-
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
-void NMI_Handler(void);
-void HardFault_Handler(void);
-void MemManage_Handler(void);
-void BusFault_Handler(void);
-void UsageFault_Handler(void);
-void SVC_Handler(void);
-void DebugMon_Handler(void);
-void PendSV_Handler(void);
 void SysTick_Handler(void);
-void USARTx_DMA_RX_IRQHandler(void);
-void USARTx_DMA_TX_IRQHandler(void);
-void USARTx_IRQHandler(void);
+void DMA1_Stream5_IRQHandler(void);
+void DMA1_Stream6_IRQHandler(void);
+void USART2_IRQHandler(void);
 
 #ifdef __cplusplus
 }

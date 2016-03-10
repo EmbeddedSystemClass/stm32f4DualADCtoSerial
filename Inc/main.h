@@ -40,8 +40,9 @@
 #define __MAIN_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_hal.h"
 #include "stm32f4_discovery.h"
+#include "arm_math.h"
+#include "arm_common_tables.h"
 /**
  * @brief Voltage and time buffer
  */
