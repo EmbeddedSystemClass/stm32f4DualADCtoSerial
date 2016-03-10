@@ -77,7 +77,7 @@ __IO uint16_t sinBuffer[sinBufferSize] = { 0 };
 __IO ITStatus UartReady = RESET;
 
 /* Buffer used for transmission */
-uint8_t aTxBuffer[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+uint8_t aTxBuffer[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
 /* Buffer used for reception */
 uint8_t aRxBuffer[RXBUFFERSIZE];
@@ -230,24 +230,20 @@ int main(void) {
 	BSP_LED_Off(LED3);
 	/* The board sends the message and expects to receive it back */
 
-	while (1) {
-
-		/*##-2- Start the transmission process #####################################*/
-		/* While the UART in reception process, user can transmit data through
-		 "aTxBuffer" buffer */
-		if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*) aTxBuffer, TXBUFFERSIZE)
-				!= HAL_OK) {
-			Error_Handler();
-		}
-
-		/*##-3- Wait for the end of the transfer ###################################*/
-		while (UartReady != SET) {
-		}
-
-		/* Reset transmission flag */
-		UartReady = RESET;
-
+	/*##-2- Start the transmission process #####################################*/
+	/* While the UART in reception process, user can transmit data through
+	 "aTxBuffer" buffer */
+	if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*) aTxBuffer, TXBUFFERSIZE)
+			!= HAL_OK) {
+		Error_Handler();
 	}
+
+	/*##-3- Wait for the end of the transfer ###################################*/
+	while (UartReady != SET) {
+	}
+
+	/* Reset transmission flag */
+	UartReady = RESET;
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -413,7 +409,7 @@ void MX_USART2_UART_Init(void) {
 
 	huart2.Instance = USART2;
 	huart2.Init.BaudRate = 115200;
-	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.WordLength = UART_WORDLENGTH_9B;
 	huart2.Init.StopBits = UART_STOPBITS_1;
 	huart2.Init.Parity = UART_PARITY_NONE;
 	huart2.Init.Mode = UART_MODE_TX_RX;
@@ -428,9 +424,9 @@ void MX_USART2_UART_Init(void) {
  */
 void MX_DMA_Init(void) {
 	/* DMA controller clock enable */
-	__DMA1_CLK_ENABLE()
-	;
 	__DMA2_CLK_ENABLE()
+	;
+	__DMA1_CLK_ENABLE()
 	;
 
 	/* DMA interrupt init */
