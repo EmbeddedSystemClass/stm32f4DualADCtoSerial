@@ -4672,20 +4672,21 @@ LOAD c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.
                 0x08001ef8                SystemClock_Config
  *fill*         0x08001f9c        0x4 
  .text.startup.main
-                0x08001fa0      0x390 Application/User/main.o
+                0x08001fa0      0x398 Application/User/main.o
                 0x08001fa0                main
  .text.processAdcPacket
-                0x08002330       0x90 Application/User/main.o
-                0x08002330                processAdcPacket
+                0x08002338       0x88 Application/User/main.o
+                0x08002338                processAdcPacket
  .text.HAL_ADC_ConvCpltCallback
-                0x080023c0        0xa Application/User/main.o
+                0x080023c0        0x8 Application/User/main.o
                 0x080023c0                HAL_ADC_ConvCpltCallback
  .text.HAL_ADC_ConvHalfCpltCallback
-                0x080023ca        0x8 Application/User/main.o
-                0x080023ca                HAL_ADC_ConvHalfCpltCallback
+                0x080023c8        0x8 Application/User/main.o
+                0x080023c8                HAL_ADC_ConvHalfCpltCallback
  .text.HAL_SPI_ErrorCallback
-                0x080023d2        0x6 Application/User/main.o
-                0x080023d2                HAL_SPI_ErrorCallback
+                0x080023d0        0x6 Application/User/main.o
+                0x080023d0                HAL_SPI_ErrorCallback
+ *fill*         0x080023d6        0x2 
  .text.BSP_LED_Init
                 0x080023d8       0xb0 Application/User/stm32f4_discovery.o
                 0x080023d8                BSP_LED_Init
@@ -5022,55 +5023,55 @@ LOAD c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.
                 0x10000000                _eccmram = .
                 0x10000000                . = ALIGN (0x4)
 
-.bss            0x20000030     0x1da0
+.bss            0x20000030      0xf60
                 0x20000030                _sbss = .
                 0x20000030                __bss_start__ = _sbss
  *(.bss)
  .bss           0x20000030       0x1c c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.0.201602121829/tools/compiler/bin/../lib/gcc/arm-none-eabi/5.2.1/armv7e-m/fpu/crtbegin.o
  .bss           0x2000004c        0x4 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
- .bss           0x20000050     0x1a96 Application/User/main.o
+ .bss           0x20000050      0xc56 Application/User/main.o
                 0x20000050                lastTime
                 0x20000054                bufferFirst
-                0x20000694                bufferLast
-                0x20000cd4                aADCDualConvertedValue
-                0x200010d4                sinBuffer
-                0x200018d4                tick
-                0x200018d8                UartReady
-                0x200018dc                sampleMultiplier
-                0x200018e0                sampleCounter
-                0x200018e4                uhDACxConvertedValue
-                0x200018e6                uhADCxConvertedValue
+                0x200000f4                bufferLast
+                0x20000194                aADCDualConvertedValue
+                0x20000394                sinBuffer
+                0x20000b94                tick
+                0x20000b98                UartReady
+                0x20000b9c                sampleMultiplier
+                0x20000ba0                sampleCounter
+                0x20000ba4                uhDACxConvertedValue
+                0x20000ba6                uhADCxConvertedValue
  *(.bss*)
  *(COMMON)
- *fill*         0x20001ae6        0x2 
- COMMON         0x20001ae8      0x2e8 Application/User/main.o
-                0x20001ae8                hspi2
-                0x20001b40                hadc2
-                0x20001b84                hi2c1
-                0x20001bc0                hdma_spi2_rx
-                0x20001c18                hadc1
-                0x20001c5c                i
-                0x20001c60                hdac
-                0x20001c74                hdma_adc1
-                0x20001ccc                htim6
-                0x20001d08                aRxBuffer
-                0x20001d10                hdma_dac2
-                0x20001d68                hdma_spi2_tx
-                0x20001dc0                voltageStruct
-                0x20001dd0                . = ALIGN (0x4)
-                0x20001dd0                _ebss = .
-                0x20001dd0                __bss_end__ = _ebss
+ *fill*         0x20000ca6        0x2 
+ COMMON         0x20000ca8      0x2e8 Application/User/main.o
+                0x20000ca8                hspi2
+                0x20000d00                hadc2
+                0x20000d44                hi2c1
+                0x20000d80                hdma_spi2_rx
+                0x20000dd8                hadc1
+                0x20000e1c                i
+                0x20000e20                hdac
+                0x20000e34                hdma_adc1
+                0x20000e8c                htim6
+                0x20000ec8                aRxBuffer
+                0x20000ed0                hdma_dac2
+                0x20000f28                hdma_spi2_tx
+                0x20000f80                voltageStruct
+                0x20000f90                . = ALIGN (0x4)
+                0x20000f90                _ebss = .
+                0x20000f90                __bss_end__ = _ebss
 
 ._user_heap_stack
-                0x20001dd0      0x600
-                0x20001dd0                . = ALIGN (0x8)
+                0x20000f90      0x600
+                0x20000f90                . = ALIGN (0x8)
                 [!provide]                PROVIDE (end, .)
                 [!provide]                PROVIDE (_end, .)
-                0x20001fd0                . = (. + _Min_Heap_Size)
- *fill*         0x20001dd0      0x200 
-                0x200023d0                . = (. + _Min_Stack_Size)
- *fill*         0x20001fd0      0x400 
-                0x200023d0                . = ALIGN (0x8)
+                0x20001190                . = (. + _Min_Heap_Size)
+ *fill*         0x20000f90      0x200 
+                0x20001590                . = (. + _Min_Stack_Size)
+ *fill*         0x20001190      0x400 
+                0x20001590                . = ALIGN (0x8)
 
 /DISCARD/
  libc.a(*)
@@ -5144,7 +5145,7 @@ LOAD c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.
                 0x00000614       0x22 c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.0.201602121829/tools/compiler/bin/../lib/gcc/arm-none-eabi/5.2.1/armv7e-m/fpu/crtn.o
 OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
 
-.debug_info     0x00000000    0x14199
+.debug_info     0x00000000    0x14196
  .debug_info    0x00000000     0x2eaf stm32f4xx_hal_tim.o
  .debug_info    0x00002eaf      0x8ea Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
  .debug_info    0x00003799      0xd0c Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o
@@ -5159,16 +5160,16 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_info    0x00008fa7      0x962 Application/User/arm_common_tables.o
  .debug_info    0x00009909      0x172 Application/User/arm_cos_f32.o
  .debug_info    0x00009a7b      0x172 Application/User/arm_sin_f32.o
- .debug_info    0x00009bed     0x22a8 Application/User/main.o
- .debug_info    0x0000be95     0x1970 Application/User/stm32f4_discovery.o
- .debug_info    0x0000d805     0x27a3 Application/User/stm32f4xx_hal_i2c.o
- .debug_info    0x0000ffa8     0x1726 Application/User/stm32f4xx_hal_msp.o
- .debug_info    0x000116ce     0x1633 Application/User/stm32f4xx_hal_spi.o
- .debug_info    0x00012d01      0xf75 Application/User/stm32f4xx_hal_tim_ex.o
- .debug_info    0x00013c76      0x40b Application/User/stm32f4xx_it.o
- .debug_info    0x00014081      0x118 Application/SW4STM32/startup_stm32f407xx.o
+ .debug_info    0x00009bed     0x22a5 Application/User/main.o
+ .debug_info    0x0000be92     0x1970 Application/User/stm32f4_discovery.o
+ .debug_info    0x0000d802     0x27a3 Application/User/stm32f4xx_hal_i2c.o
+ .debug_info    0x0000ffa5     0x1726 Application/User/stm32f4xx_hal_msp.o
+ .debug_info    0x000116cb     0x1633 Application/User/stm32f4xx_hal_spi.o
+ .debug_info    0x00012cfe      0xf75 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_info    0x00013c73      0x40b Application/User/stm32f4xx_it.o
+ .debug_info    0x0001407e      0x118 Application/SW4STM32/startup_stm32f407xx.o
 
-.debug_abbrev   0x00000000     0x2f4d
+.debug_abbrev   0x00000000     0x2f3e
  .debug_abbrev  0x00000000      0x325 stm32f4xx_hal_tim.o
  .debug_abbrev  0x00000325      0x234 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
  .debug_abbrev  0x00000559      0x2a4 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o
@@ -5183,16 +5184,16 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_abbrev  0x000019f1       0x85 Application/User/arm_common_tables.o
  .debug_abbrev  0x00001a76       0xe1 Application/User/arm_cos_f32.o
  .debug_abbrev  0x00001b57       0xe1 Application/User/arm_sin_f32.o
- .debug_abbrev  0x00001c38      0x38c Application/User/main.o
- .debug_abbrev  0x00001fc4      0x372 Application/User/stm32f4_discovery.o
- .debug_abbrev  0x00002336      0x2bc Application/User/stm32f4xx_hal_i2c.o
- .debug_abbrev  0x000025f2      0x240 Application/User/stm32f4xx_hal_msp.o
- .debug_abbrev  0x00002832      0x343 Application/User/stm32f4xx_hal_spi.o
- .debug_abbrev  0x00002b75      0x273 Application/User/stm32f4xx_hal_tim_ex.o
- .debug_abbrev  0x00002de8      0x153 Application/User/stm32f4xx_it.o
- .debug_abbrev  0x00002f3b       0x12 Application/SW4STM32/startup_stm32f407xx.o
+ .debug_abbrev  0x00001c38      0x37d Application/User/main.o
+ .debug_abbrev  0x00001fb5      0x372 Application/User/stm32f4_discovery.o
+ .debug_abbrev  0x00002327      0x2bc Application/User/stm32f4xx_hal_i2c.o
+ .debug_abbrev  0x000025e3      0x240 Application/User/stm32f4xx_hal_msp.o
+ .debug_abbrev  0x00002823      0x343 Application/User/stm32f4xx_hal_spi.o
+ .debug_abbrev  0x00002b66      0x273 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_abbrev  0x00002dd9      0x153 Application/User/stm32f4xx_it.o
+ .debug_abbrev  0x00002f2c       0x12 Application/SW4STM32/startup_stm32f407xx.o
 
-.debug_loc      0x00000000     0xa801
+.debug_loc      0x00000000     0xa7ed
  .debug_loc     0x00000000     0x3146 stm32f4xx_hal_tim.o
  .debug_loc     0x00003146       0x84 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
  .debug_loc     0x000031ca      0x688 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o
@@ -5206,12 +5207,12 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_loc     0x000059c9       0xd7 Drivers/CMSIS/system_stm32f4xx.o
  .debug_loc     0x00005aa0       0x94 Application/User/arm_cos_f32.o
  .debug_loc     0x00005b34      0x102 Application/User/arm_sin_f32.o
- .debug_loc     0x00005c36      0x1cb Application/User/main.o
- .debug_loc     0x00005e01      0x3e7 Application/User/stm32f4_discovery.o
- .debug_loc     0x000061e8     0x2a12 Application/User/stm32f4xx_hal_i2c.o
- .debug_loc     0x00008bfa      0x1b0 Application/User/stm32f4xx_hal_msp.o
- .debug_loc     0x00008daa     0x129e Application/User/stm32f4xx_hal_spi.o
- .debug_loc     0x0000a048      0x7b9 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_loc     0x00005c36      0x1b7 Application/User/main.o
+ .debug_loc     0x00005ded      0x3e7 Application/User/stm32f4_discovery.o
+ .debug_loc     0x000061d4     0x2a12 Application/User/stm32f4xx_hal_i2c.o
+ .debug_loc     0x00008be6      0x1b0 Application/User/stm32f4xx_hal_msp.o
+ .debug_loc     0x00008d96     0x129e Application/User/stm32f4xx_hal_spi.o
+ .debug_loc     0x0000a034      0x7b9 Application/User/stm32f4xx_hal_tim_ex.o
 
 .debug_aranges  0x00000000      0xcd0
  .debug_aranges
@@ -5379,7 +5380,7 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_macro   0x000164b4      0x325 Application/User/stm32f4xx_hal_tim_ex.o
  .debug_macro   0x000167d9      0x32f Application/User/stm32f4xx_it.o
 
-.debug_line     0x00000000     0xec5b
+.debug_line     0x00000000     0xec5c
  .debug_line    0x00000000     0x16ec stm32f4xx_hal_tim.o
  .debug_line    0x000016ec      0xa15 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
  .debug_line    0x00002101      0xcb4 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o
@@ -5394,16 +5395,16 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_line    0x0000822a      0x45e Application/User/arm_common_tables.o
  .debug_line    0x00008688      0x484 Application/User/arm_cos_f32.o
  .debug_line    0x00008b0c      0x485 Application/User/arm_sin_f32.o
- .debug_line    0x00008f91      0xb34 Application/User/main.o
- .debug_line    0x00009ac5      0xb06 Application/User/stm32f4_discovery.o
- .debug_line    0x0000a5cb     0x1597 Application/User/stm32f4xx_hal_i2c.o
- .debug_line    0x0000bb62      0xa02 Application/User/stm32f4xx_hal_msp.o
- .debug_line    0x0000c564     0x10b6 Application/User/stm32f4xx_hal_spi.o
- .debug_line    0x0000d61a      0xc85 Application/User/stm32f4xx_hal_tim_ex.o
- .debug_line    0x0000e29f      0x8d8 Application/User/stm32f4xx_it.o
- .debug_line    0x0000eb77       0xe4 Application/SW4STM32/startup_stm32f407xx.o
+ .debug_line    0x00008f91      0xb35 Application/User/main.o
+ .debug_line    0x00009ac6      0xb06 Application/User/stm32f4_discovery.o
+ .debug_line    0x0000a5cc     0x1597 Application/User/stm32f4xx_hal_i2c.o
+ .debug_line    0x0000bb63      0xa02 Application/User/stm32f4xx_hal_msp.o
+ .debug_line    0x0000c565     0x10b6 Application/User/stm32f4xx_hal_spi.o
+ .debug_line    0x0000d61b      0xc85 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_line    0x0000e2a0      0x8d8 Application/User/stm32f4xx_it.o
+ .debug_line    0x0000eb78       0xe4 Application/SW4STM32/startup_stm32f407xx.o
 
-.debug_str      0x00000000    0x8593f
+.debug_str      0x00000000    0x8593e
  .debug_str     0x00000000    0x7f4bb stm32f4xx_hal_tim.o
                               0x7f870 (size before relaxing)
  .debug_str     0x0007f4bb      0xab3 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
@@ -5432,19 +5433,19 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
                                0x75e4 (size before relaxing)
  .debug_str     0x000831ed       0x8c Application/User/arm_sin_f32.o
                                0x75e4 (size before relaxing)
- .debug_str     0x00083279     0x14ab Application/User/main.o
-                              0x8238f (size before relaxing)
- .debug_str     0x00084724      0x48e Application/User/stm32f4_discovery.o
+ .debug_str     0x00083279     0x14aa Application/User/main.o
+                              0x8238e (size before relaxing)
+ .debug_str     0x00084723      0x48e Application/User/stm32f4_discovery.o
                               0x8070d (size before relaxing)
- .debug_str     0x00084bb2      0x517 Application/User/stm32f4xx_hal_i2c.o
+ .debug_str     0x00084bb1      0x517 Application/User/stm32f4xx_hal_i2c.o
                               0x7f2f3 (size before relaxing)
- .debug_str     0x000850c9      0x11b Application/User/stm32f4xx_hal_msp.o
+ .debug_str     0x000850c8      0x11b Application/User/stm32f4xx_hal_msp.o
                               0x7fc2b (size before relaxing)
- .debug_str     0x000851e4      0x2ab Application/User/stm32f4xx_hal_spi.o
+ .debug_str     0x000851e3      0x2ab Application/User/stm32f4xx_hal_spi.o
                               0x7f0ca (size before relaxing)
- .debug_str     0x0008548f      0x3e2 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_str     0x0008548e      0x3e2 Application/User/stm32f4xx_hal_tim_ex.o
                               0x7f2bf (size before relaxing)
- .debug_str     0x00085871       0xce Application/User/stm32f4xx_it.o
+ .debug_str     0x00085870       0xce Application/User/stm32f4xx_it.o
                               0x7ec36 (size before relaxing)
 
 .comment        0x00000000       0x6e
