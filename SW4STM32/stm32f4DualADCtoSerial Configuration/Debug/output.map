@@ -5145,7 +5145,7 @@ LOAD c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.
                 0x00000614       0x22 c:/ac6/systemworkbench/plugins/fr.ac6.mcu.externaltools.arm-none.win32_1.7.0.201602121829/tools/compiler/bin/../lib/gcc/arm-none-eabi/5.2.1/armv7e-m/fpu/crtn.o
 OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
 
-.debug_info     0x00000000    0x14196
+.debug_info     0x00000000    0x14195
  .debug_info    0x00000000     0x2eaf stm32f4xx_hal_tim.o
  .debug_info    0x00002eaf      0x8ea Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
  .debug_info    0x00003799      0xd0c Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o
@@ -5160,14 +5160,14 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_info    0x00008fa7      0x962 Application/User/arm_common_tables.o
  .debug_info    0x00009909      0x172 Application/User/arm_cos_f32.o
  .debug_info    0x00009a7b      0x172 Application/User/arm_sin_f32.o
- .debug_info    0x00009bed     0x22a5 Application/User/main.o
- .debug_info    0x0000be92     0x1970 Application/User/stm32f4_discovery.o
- .debug_info    0x0000d802     0x27a3 Application/User/stm32f4xx_hal_i2c.o
- .debug_info    0x0000ffa5     0x1726 Application/User/stm32f4xx_hal_msp.o
- .debug_info    0x000116cb     0x1633 Application/User/stm32f4xx_hal_spi.o
- .debug_info    0x00012cfe      0xf75 Application/User/stm32f4xx_hal_tim_ex.o
- .debug_info    0x00013c73      0x40b Application/User/stm32f4xx_it.o
- .debug_info    0x0001407e      0x118 Application/SW4STM32/startup_stm32f407xx.o
+ .debug_info    0x00009bed     0x22a4 Application/User/main.o
+ .debug_info    0x0000be91     0x1970 Application/User/stm32f4_discovery.o
+ .debug_info    0x0000d801     0x27a3 Application/User/stm32f4xx_hal_i2c.o
+ .debug_info    0x0000ffa4     0x1726 Application/User/stm32f4xx_hal_msp.o
+ .debug_info    0x000116ca     0x1633 Application/User/stm32f4xx_hal_spi.o
+ .debug_info    0x00012cfd      0xf75 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_info    0x00013c72      0x40b Application/User/stm32f4xx_it.o
+ .debug_info    0x0001407d      0x118 Application/SW4STM32/startup_stm32f407xx.o
 
 .debug_abbrev   0x00000000     0x2f3e
  .debug_abbrev  0x00000000      0x325 stm32f4xx_hal_tim.o
@@ -5380,7 +5380,7 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_macro   0x000164b4      0x325 Application/User/stm32f4xx_hal_tim_ex.o
  .debug_macro   0x000167d9      0x32f Application/User/stm32f4xx_it.o
 
-.debug_line     0x00000000     0xec5c
+.debug_line     0x00000000     0xec58
  .debug_line    0x00000000     0x16ec stm32f4xx_hal_tim.o
  .debug_line    0x000016ec      0xa15 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.o
  .debug_line    0x00002101      0xcb4 Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.o
@@ -5395,14 +5395,14 @@ OUTPUT(stm32f4DualADCtoSerial Configuration.elf elf32-littlearm)
  .debug_line    0x0000822a      0x45e Application/User/arm_common_tables.o
  .debug_line    0x00008688      0x484 Application/User/arm_cos_f32.o
  .debug_line    0x00008b0c      0x485 Application/User/arm_sin_f32.o
- .debug_line    0x00008f91      0xb35 Application/User/main.o
- .debug_line    0x00009ac6      0xb06 Application/User/stm32f4_discovery.o
- .debug_line    0x0000a5cc     0x1597 Application/User/stm32f4xx_hal_i2c.o
- .debug_line    0x0000bb63      0xa02 Application/User/stm32f4xx_hal_msp.o
- .debug_line    0x0000c565     0x10b6 Application/User/stm32f4xx_hal_spi.o
- .debug_line    0x0000d61b      0xc85 Application/User/stm32f4xx_hal_tim_ex.o
- .debug_line    0x0000e2a0      0x8d8 Application/User/stm32f4xx_it.o
- .debug_line    0x0000eb78       0xe4 Application/SW4STM32/startup_stm32f407xx.o
+ .debug_line    0x00008f91      0xb31 Application/User/main.o
+ .debug_line    0x00009ac2      0xb06 Application/User/stm32f4_discovery.o
+ .debug_line    0x0000a5c8     0x1597 Application/User/stm32f4xx_hal_i2c.o
+ .debug_line    0x0000bb5f      0xa02 Application/User/stm32f4xx_hal_msp.o
+ .debug_line    0x0000c561     0x10b6 Application/User/stm32f4xx_hal_spi.o
+ .debug_line    0x0000d617      0xc85 Application/User/stm32f4xx_hal_tim_ex.o
+ .debug_line    0x0000e29c      0x8d8 Application/User/stm32f4xx_it.o
+ .debug_line    0x0000eb74       0xe4 Application/SW4STM32/startup_stm32f407xx.o
 
 .debug_str      0x00000000    0x8593e
  .debug_str     0x00000000    0x7f4bb stm32f4xx_hal_tim.o
