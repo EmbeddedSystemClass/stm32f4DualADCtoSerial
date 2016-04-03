@@ -269,6 +269,7 @@ void MX_ADC1_Init(void)
 {
 
   ADC_MultiModeTypeDef multimode;
+  ADC_AnalogWDGConfTypeDef AnalogWDGConfig;
   ADC_ChannelConfTypeDef sConfig;
 
     /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
@@ -293,6 +294,15 @@ void MX_ADC1_Init(void)
   multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
   HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode);
 
+    /**Configure the analog watchdog 
+    */
+  AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
+  AnalogWDGConfig.HighThreshold = 4000;
+  AnalogWDGConfig.LowThreshold = 100;
+  AnalogWDGConfig.Channel = ADC_CHANNEL_1;
+  AnalogWDGConfig.ITMode = DISABLE;
+  HAL_ADC_AnalogWDGConfig(&hadc1, &AnalogWDGConfig);
+
     /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
     */
   sConfig.Channel = ADC_CHANNEL_1;
@@ -307,6 +317,7 @@ void MX_ADC2_Init(void)
 {
 
   ADC_MultiModeTypeDef multimode;
+  ADC_AnalogWDGConfTypeDef AnalogWDGConfig;
   ADC_ChannelConfTypeDef sConfig;
 
     /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
@@ -329,6 +340,15 @@ void MX_ADC2_Init(void)
   multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
   multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
   HAL_ADCEx_MultiModeConfigChannel(&hadc2, &multimode);
+
+    /**Configure the analog watchdog 
+    */
+  AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
+  AnalogWDGConfig.HighThreshold = 4000;
+  AnalogWDGConfig.LowThreshold = 100;
+  AnalogWDGConfig.Channel = ADC_CHANNEL_2;
+  AnalogWDGConfig.ITMode = DISABLE;
+  HAL_ADC_AnalogWDGConfig(&hadc2, &AnalogWDGConfig);
 
     /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
     */
@@ -562,7 +582,7 @@ static void DAC_Ch2_SinConfig(void) {
 		sin = arm_sin_f32(phase * 10.0);
 		cos = arm_cos_f32(phase);
 
-		waveformValue = 4095. * (2. + .3 * sin + cos) / 4.;
+		waveformValue = 2047 + 2047. * (.0 * sin + cos) / 4.;
 		sinBuffer[i] = waveformValue;
 	}
 

@@ -24,7 +24,7 @@ typedef struct {
 /* Exported constants --------------------------------------------------------*/
 #define VOLTAGE_BUFFER_LENGTH 128
 #define SINGLE_PACKET_LENGTH 4
-#define PACKETS_PER_FRAME 10
+#define PACKETS_PER_FRAME 250
 #define ETHERNET_BUFFER_LENGTH SINGLE_PACKET_LENGTH * PACKETS_PER_FRAME
 /* Exported macro ------------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
