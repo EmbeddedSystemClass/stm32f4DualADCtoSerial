@@ -41,12 +41,8 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc1;
-ADC_HandleTypeDef hadc2;
-DMA_HandleTypeDef hdma_adc1;
-
 DAC_HandleTypeDef hdac;
-DMA_HandleTypeDef hdma_dac2;
+DMA_HandleTypeDef hdma_dac1;
 
 I2C_HandleTypeDef hi2c1;
 
@@ -58,7 +54,6 @@ TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-VoltageStruct voltageStruct;
 
 /* Buffer used for transmission */
 uint8_t aTxBuffer[] = "message*";
@@ -67,13 +62,9 @@ uint8_t aTxBuffer[] = "message*";
 uint8_t aRxBuffer[BUFFERSIZE];
 
 /* Variable used to get converted value */
-__IO uint32_t aADCDualConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
-__IO uint16_t uhADCxConvertedValue[VOLTAGE_BUFFER_LENGTH] = { 0 };
 __IO uint16_t uhDACxConvertedValue = 0;
 uint32_t sampleCounter = 0;
 uint32_t sampleMultiplier = 0;
-uint32_t bufferFirst[ETHERNET_BUFFER_LENGTH] = { 0 };
-uint32_t bufferLast[ETHERNET_BUFFER_LENGTH] = { 0 };
 
 #define sinBufferSize 1024
 __IO uint16_t sinBuffer[sinBufferSize] = { 0 };
@@ -86,8 +77,6 @@ __IO ITStatus UartReady = RESET;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-static void MX_ADC1_Init(void);
-static void MX_ADC2_Init(void);
 static void MX_DAC_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI2_Init(void);
@@ -97,11 +86,10 @@ static void MX_TIM6_Init(void);
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-static void DAC_Ch2_SinConfig(void);
+static void DAC_Ch1_SinConfig(void);
 void processAdcPacket(uint32_t startIndex, uint32_t endIndex);
 
 static void Error_Handler(void);
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle);
 
 static void Error_Handler(void);
 
@@ -109,47 +97,6 @@ void broadcastVoltage(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-uint32_t lastTime = 0;
-void broadcastVoltage() {
-
-	int lastTimeIndex = voltageStruct.bufferLength - (SINGLE_PACKET_LENGTH - 1);
-	if (voltageStruct.bufferFirstHalf[lastTimeIndex] > lastTime) {
-
-		/*##-2- Start the Full Duplex Communication process ########################*/
-		if (HAL_SPI_Transmit_DMA(&hspi2,
-				(uint8_t*) voltageStruct.bufferFirstHalf,
-				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
-				!= HAL_OK) {
-			/* Transfer error in transmission process */
-			Error_Handler();
-		}
-
-		/*##-3- Wait for the end of the transfer ###################################*/
-		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
-		}
-
-		lastTime = voltageStruct.bufferFirstHalf[lastTimeIndex];
-
-	}
-	if (voltageStruct.bufferLastHalf[lastTimeIndex] > lastTime) {
-
-		if (HAL_SPI_Transmit_DMA(&hspi2,
-				(uint8_t*) voltageStruct.bufferLastHalf,
-				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
-				!= HAL_OK) {
-			/* Transfer error in transmission process */
-			Error_Handler();
-		}
-
-		/*##-3- Wait for the end of the transfer ###################################*/
-		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
-		}
-
-		lastTime = voltageStruct.bufferLastHalf[lastTimeIndex];
-
-	}
-
-}
 
 /* USER CODE END 0 */
 
@@ -157,10 +104,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	voltageStruct.packetHeader = 0x0000AA55;
-	voltageStruct.bufferFirstHalf = bufferFirst;
-	voltageStruct.bufferLastHalf = bufferLast;
-	voltageStruct.bufferLength = ETHERNET_BUFFER_LENGTH;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -174,8 +117,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_ADC1_Init();
-  MX_ADC2_Init();
   MX_DAC_Init();
   MX_I2C1_Init();
   MX_SPI2_Init();
@@ -193,23 +134,7 @@ int main(void)
 
 	/*## Enable peripherals ####################################################*/
 
-	/* Enable ADC slave */
-	if (HAL_ADC_Start(&hadc2) != HAL_OK) {
-		/* Start Error */
-		Error_Handler();
-	}
-
-	/*## Start ADC conversions #################################################*/
-
-	/* Start ADCx and ADCy multimode conversion with interruption */
-	if (HAL_ADCEx_MultiModeStart_DMA(&hadc1,
-			(uint32_t *) &aADCDualConvertedValue, VOLTAGE_BUFFER_LENGTH)
-			!= HAL_OK) {
-		/* Start Error */
-		Error_Handler();
-	}
-
-	DAC_Ch2_SinConfig();
+	DAC_Ch1_SinConfig();
 
   /* USER CODE END 2 */
 
@@ -219,7 +144,6 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		broadcastVoltage();
 
 	}
   /* USER CODE END 3 */
@@ -264,101 +188,6 @@ void SystemClock_Config(void)
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-/* ADC1 init function */
-void MX_ADC1_Init(void)
-{
-
-  ADC_MultiModeTypeDef multimode;
-  ADC_AnalogWDGConfTypeDef AnalogWDGConfig;
-  ADC_ChannelConfTypeDef sConfig;
-
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
-    */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc1.Init.Resolution = ADC_RESOLUTION12b;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = ENABLE;
-  hadc1.Init.EOCSelection = EOC_SINGLE_CONV;
-  HAL_ADC_Init(&hadc1);
-
-    /**Configure the ADC multi-mode 
-    */
-  multimode.Mode = ADC_DUALMODE_REGSIMULT;
-  multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
-  HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode);
-
-    /**Configure the analog watchdog 
-    */
-  AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
-  AnalogWDGConfig.HighThreshold = 4000;
-  AnalogWDGConfig.LowThreshold = 100;
-  AnalogWDGConfig.Channel = ADC_CHANNEL_1;
-  AnalogWDGConfig.ITMode = DISABLE;
-  HAL_ADC_AnalogWDGConfig(&hadc1, &AnalogWDGConfig);
-
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
-    */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-}
-
-/* ADC2 init function */
-void MX_ADC2_Init(void)
-{
-
-  ADC_MultiModeTypeDef multimode;
-  ADC_AnalogWDGConfTypeDef AnalogWDGConfig;
-  ADC_ChannelConfTypeDef sConfig;
-
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
-    */
-  hadc2.Instance = ADC2;
-  hadc2.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc2.Init.Resolution = ADC_RESOLUTION12b;
-  hadc2.Init.ScanConvMode = DISABLE;
-  hadc2.Init.ContinuousConvMode = ENABLE;
-  hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc2.Init.NbrOfConversion = 1;
-  hadc2.Init.DMAContinuousRequests = ENABLE;
-  hadc2.Init.EOCSelection = EOC_SINGLE_CONV;
-  HAL_ADC_Init(&hadc2);
-
-    /**Configure the ADC multi-mode 
-    */
-  multimode.Mode = ADC_DUALMODE_REGSIMULT;
-  multimode.DMAAccessMode = ADC_DMAACCESSMODE_2;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
-  HAL_ADCEx_MultiModeConfigChannel(&hadc2, &multimode);
-
-    /**Configure the analog watchdog 
-    */
-  AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
-  AnalogWDGConfig.HighThreshold = 4000;
-  AnalogWDGConfig.LowThreshold = 100;
-  AnalogWDGConfig.Channel = ADC_CHANNEL_2;
-  AnalogWDGConfig.ITMode = DISABLE;
-  HAL_ADC_AnalogWDGConfig(&hadc2, &AnalogWDGConfig);
-
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
-    */
-  sConfig.Channel = ADC_CHANNEL_2;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
-
-}
-
 /* DAC init function */
 void MX_DAC_Init(void)
 {
@@ -370,11 +199,11 @@ void MX_DAC_Init(void)
   hdac.Instance = DAC;
   HAL_DAC_Init(&hdac);
 
-    /**DAC channel OUT2 config 
+    /**DAC channel OUT1 config 
     */
   sConfig.DAC_Trigger = DAC_TRIGGER_T6_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-  HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2);
+  HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1);
 
 }
 
@@ -439,17 +268,14 @@ void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __DMA1_CLK_ENABLE();
-  __DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
 
 }
 
@@ -494,68 +320,13 @@ static void Error_Handler(void) {
 	}
 }
 
-int i, firstHalfBufferIsActive = 1;
-uint32_t tick = 0;
-/**
- * @brief  Conversion complete callback in non blocking mode
- * @param  AdcHandle : AdcHandle handle
- * @note   This example shows a simple way to report end of conversion, and
- *         you can add your own implementation.
- * @retval None
- */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle) {
-	int startIndex = VOLTAGE_BUFFER_LENGTH / 2;
-	int endIndex = VOLTAGE_BUFFER_LENGTH;
-	processAdcPacket(startIndex, endIndex);
-}
-
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* AdcHandle) {
-	int startIndex = 0;
-	int endIndex = VOLTAGE_BUFFER_LENGTH / 2;
-	processAdcPacket(startIndex, endIndex);
-}
-
-void processAdcPacket(uint32_t startIndex, uint32_t endIndex) {
-	uint32_t j, masterConvertedValue = 0, slaveConvertedValue = 0;
-
-	for (j = startIndex; j < endIndex; j++) {
-		masterConvertedValue += aADCDualConvertedValue[j] & 0xFFFF;
-		slaveConvertedValue += aADCDualConvertedValue[j] >> 16;
-	}
-
-	if (firstHalfBufferIsActive) {
-		voltageStruct.bufferFirstHalf[i] = voltageStruct.packetHeader;
-		voltageStruct.bufferFirstHalf[i + 1] = tick;
-		voltageStruct.bufferFirstHalf[i + 2] = masterConvertedValue
-				/ (VOLTAGE_BUFFER_LENGTH / 2);
-		voltageStruct.bufferFirstHalf[i + 3] = slaveConvertedValue
-				/ (VOLTAGE_BUFFER_LENGTH / 2);
-	} else {
-		voltageStruct.bufferLastHalf[i] = voltageStruct.packetHeader;
-		voltageStruct.bufferLastHalf[i + 1] = tick;
-		voltageStruct.bufferLastHalf[i + 2] = masterConvertedValue
-				/ (VOLTAGE_BUFFER_LENGTH / 2);
-		voltageStruct.bufferLastHalf[i + 3] = slaveConvertedValue
-				/ (VOLTAGE_BUFFER_LENGTH / 2);
-	}
-	tick += 1;
-
-	if (i < ETHERNET_BUFFER_LENGTH - SINGLE_PACKET_LENGTH) {
-		i += SINGLE_PACKET_LENGTH;
-	} else {
-		i = 0;
-		firstHalfBufferIsActive = !firstHalfBufferIsActive;
-	}
-
-}
-
 /**
  * @brief  Error DAC callback for Channel1.
  * @param  hdac: pointer to a DAC_HandleTypeDef structure that contains
  *         the configuration information for the specified DAC.
  * @retval None
  */
-void HAL_DAC_ErrorCallbackCh2(DAC_HandleTypeDef *hdac) {
+void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac) {
 	Error_Handler();
 }
 
@@ -565,12 +336,11 @@ void HAL_DAC_ErrorCallbackCh2(DAC_HandleTypeDef *hdac) {
  *         the configuration information for the specified DAC.
  * @retval None
  */
-void HAL_DAC_DMAUnderrunCallbackCh2(DAC_HandleTypeDef *hdac) {
+void HAL_DAC_DMAUnderrunCallbackCh1(DAC_HandleTypeDef *hdac) {
 	Error_Handler();
 }
 
-#define PERIOD 2520
-static void DAC_Ch2_SinConfig(void) {
+static void DAC_Ch1_SinConfig(void) {
 
 	float32_t phase, sin, cos;
 
@@ -582,12 +352,12 @@ static void DAC_Ch2_SinConfig(void) {
 		sin = arm_sin_f32(phase * 10.0);
 		cos = arm_cos_f32(phase);
 
-		waveformValue = 2047 + 2047. * (.0 * sin + cos) / 4.;
+		waveformValue = 2047 + 2047. * (.3 * sin + cos) / 2.;
 		sinBuffer[i] = waveformValue;
 	}
 
 	/*##-2- Enable DAC selected channel and associated DMA #############################*/
-	if (HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_2, (uint32_t *) sinBuffer,
+	if (HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *) sinBuffer,
 			(size_t) sinBufferSize, DAC_ALIGN_12B_R) != HAL_OK) {
 		/* Start DMA Error */
 		Error_Handler();

@@ -20,8 +20,6 @@ Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_flash_ramfunc.o: \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h \
- C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc.h \
- C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc_ex.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dac.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dac_ex.h \
  C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h \
@@ -74,10 +72,6 @@ C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_D
 C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h:
 
 C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h:
-
-C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc.h:
-
-C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc_ex.h:
 
 C:/Users/scott/repos/code/openstm/stm32f4DualADCtoSerial/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dac.h:
 
