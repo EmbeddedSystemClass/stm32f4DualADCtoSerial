@@ -582,7 +582,7 @@ static void DAC_Ch2_SinConfig(void) {
 		sin = arm_sin_f32(phase * 10.0);
 		cos = arm_cos_f32(phase);
 
-		waveformValue = 2047 + 2047. * (.0 * sin + cos) / 4.;
+		waveformValue = (2048. + 1024. * (.3 * sin + cos) / 2.) / 1.59;
 		sinBuffer[i] = waveformValue;
 	}
 
