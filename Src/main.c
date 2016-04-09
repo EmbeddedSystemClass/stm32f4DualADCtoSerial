@@ -50,10 +50,6 @@ DMA_HandleTypeDef hdma_dac2;
 
 I2C_HandleTypeDef hi2c1;
 
-SPI_HandleTypeDef hspi2;
-DMA_HandleTypeDef hdma_spi2_rx;
-DMA_HandleTypeDef hdma_spi2_tx;
-
 TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN PV */
@@ -90,7 +86,6 @@ static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_DAC_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_SPI2_Init(void);
 static void MX_TIM6_Init(void);
 
 /* USER CODE BEGIN PFP */
@@ -115,37 +110,10 @@ void broadcastVoltage() {
 	int lastTimeIndex = voltageStruct.bufferLength - (SINGLE_PACKET_LENGTH - 1);
 	if (voltageStruct.bufferFirstHalf[lastTimeIndex] > lastTime) {
 
-		/*##-2- Start the Full Duplex Communication process ########################*/
-		if (HAL_SPI_Transmit_DMA(&hspi2,
-				(uint8_t*) voltageStruct.bufferFirstHalf,
-				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
-				!= HAL_OK) {
-			/* Transfer error in transmission process */
-			Error_Handler();
-		}
-
-		/*##-3- Wait for the end of the transfer ###################################*/
-		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
-		}
-
 		lastTime = voltageStruct.bufferFirstHalf[lastTimeIndex];
 
 	}
 	if (voltageStruct.bufferLastHalf[lastTimeIndex] > lastTime) {
-
-		if (HAL_SPI_Transmit_DMA(&hspi2,
-				(uint8_t*) voltageStruct.bufferLastHalf,
-				(size_t) (sizeof(uint32_t) * voltageStruct.bufferLength))
-				!= HAL_OK) {
-			/* Transfer error in transmission process */
-			Error_Handler();
-		}
-
-		/*##-3- Wait for the end of the transfer ###################################*/
-		while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
-		}
-
-		lastTime = voltageStruct.bufferLastHalf[lastTimeIndex];
 
 	}
 
@@ -178,7 +146,6 @@ int main(void)
   MX_ADC2_Init();
   MX_DAC_Init();
   MX_I2C1_Init();
-  MX_SPI2_Init();
   MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
@@ -395,25 +362,6 @@ void MX_I2C1_Init(void)
 
 }
 
-/* SPI2 init function */
-void MX_SPI2_Init(void)
-{
-
-  hspi2.Instance = SPI2;
-  hspi2.Init.Mode = SPI_MODE_SLAVE;
-  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_HARD_INPUT;
-  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi2.Init.TIMode = SPI_TIMODE_DISABLED;
-  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
-  hspi2.Init.CRCPolynomial = 10;
-  HAL_SPI_Init(&hspi2);
-
-}
-
 /* TIM6 init function */
 void MX_TIM6_Init(void)
 {
@@ -438,14 +386,10 @@ void MX_TIM6_Init(void)
 void MX_DMA_Init(void) 
 {
   /* DMA controller clock enable */
-  __DMA1_CLK_ENABLE();
   __DMA2_CLK_ENABLE();
+  __DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
@@ -459,6 +403,9 @@ void MX_DMA_Init(void)
         * Output
         * EVENT_OUT
         * EXTI
+     PB13   ------> SPI2_SCK
+     PB14   ------> SPI2_MISO
+     PB15   ------> SPI2_MOSI
 */
 void MX_GPIO_Init(void)
 {
@@ -470,6 +417,14 @@ void MX_GPIO_Init(void)
   __GPIOA_CLK_ENABLE();
   __GPIOB_CLK_ENABLE();
   __GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pins : PB13 PB14 PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
@@ -592,31 +547,6 @@ static void DAC_Ch2_SinConfig(void) {
 		/* Start DMA Error */
 		Error_Handler();
 	}
-}
-
-/* @brief TxRx Transfer completed callback.
- * @param hspi: SPI handle.
- * @note This example shows a simple way to report end of DMA TxRx transfer, and
- * you can add your own implementation.
- * @retval None
- */
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	/* Turn LED4 on: Transfer in transmission process is correct */
-//	BSP_LED_On(LED4);
-	/* Turn LED6 on: Transfer in reception process is correct */
-//	BSP_LED_On(LED6);
-}
-
-/**
- * @brief  SPI error callbacks.
- * @param  hspi: SPI handle
- * @note   This example shows a simple way to report transfer error, and you can
- *         add your own implementation.
- * @retval None
- */
-void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	/* Turn LED5 on: Transfer error in reception/transmission process */
-	BSP_LED_On(LED5);
 }
 
 /* USER CODE END 4 */
